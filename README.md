@@ -3,8 +3,8 @@
 ## Dependency
 
 ```
-Django==1.11.28
-djangorestframework==3.9.1
+Django==4.2.29
+djangorestframework==3.15.2
 soaplib==2.0.0b2
 ```
 
