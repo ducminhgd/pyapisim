@@ -9,13 +9,10 @@ class Collection(models.Model):
     """Collection model"""
 
     class Status(models.TextChoices):
-        UNKNOWN = "UNKNOWN", _("Unknown")
         ACTIVE = "ACTIVE", _("Active")
         INACTIVE = "INACTIVE", _("Inactive")
-        DELETED = "DELETED", _("Deleted")
 
     class Visibility(models.TextChoices):
-        UNKNOWN = "UNKNOWN", _("Unknown")
         PUBLIC = "PUBLIC", _("Public")
         PRIVATE = "PRIVATE", _("Private")
 
@@ -23,9 +20,9 @@ class Collection(models.Model):
     name = models.CharField(max_length=100)
     code = models.CharField(max_length=50, unique=True)
     description = models.TextField(blank=True, null=True)
-    status = models.CharField(max_length=20, choices=Status, default=Status.UNKNOWN)
+    status = models.CharField(max_length=20, choices=Status, default=Status.ACTIVE)
     visibility = models.CharField(
-        max_length=20, choices=Visibility, default=Visibility.UNKNOWN
+        max_length=20, choices=Visibility, default=Visibility.PRIVATE
     )
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.CharField(max_length=100)
