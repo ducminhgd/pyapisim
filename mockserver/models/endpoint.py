@@ -7,6 +7,8 @@ from django.utils.translation import gettext_lazy as _
 
 class Endpoint(models.Model):
     """Endpoint model"""
+    class Meta:
+        unique_together = ("collection", "path")
 
     class Status(models.TextChoices):
         ACTIVE = "ACTIVE", _("Active")
