@@ -3,6 +3,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.admin import GroupAdmin as BaseGroupAdmin
 from django.contrib.auth.models import User, Group
 from django.forms import CheckboxSelectMultiple, ModelForm, MultipleChoiceField
+from django.utils.html import format_html
 
 from unfold.forms import AdminPasswordChangeForm, UserChangeForm, UserCreationForm
 from unfold.admin import ModelAdmin, TabularInline
@@ -44,9 +45,16 @@ class AuditModelAdmin(ModelAdmin):
 
 class SharedCollectionInline(TabularInline):
     model = SharedCollection
-    extra = 1
+    extra = 0 # number of inline placeholders to display
     fields = ("shared_with", "role")
     autocomplete_fields = ("shared_with",)
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "shared_with":
+            kwargs["queryset"] = db_field.remote_field.model._default_manager.exclude(
+                id=request.user.id
+            )
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 @admin.register(Collection)
 class CollectionAdmin(AuditModelAdmin):
@@ -58,6 +66,16 @@ admin.site.unregister(User)
 @admin.register(User)
 class CustomUserAdmin(UserAdmin):
     search_fields = ("username", "email", "first_name", "last_name")
+
+    def get_search_results(self, request, queryset, search_term):
+        queryset, use_distinct = super().get_search_results(
+            request, queryset, search_term
+        )
+        # Exclude the current user from autocomplete results
+        # (e.g. when sharing a collection, you can't share with yourself)
+        if "app_label" in request.GET and "model_name" in request.GET:
+            queryset = queryset.exclude(id=request.user.id)
+        return queryset, use_distinct
 
 HTTP_METHOD_CHOICES = [
     ("GET", "GET"),
@@ -82,7 +100,8 @@ class EndpointAdminForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.initial["allowed_methods"] = self.instance.allowed_methods or []
+        if self.instance.pk:
+            self.initial["allowed_methods"] = self.instance.allowed_methods or []
 
     def clean_allowed_methods(self) -> list[str]:
         return self.cleaned_data.get("allowed_methods", [])
@@ -90,6 +109,17 @@ class EndpointAdminForm(ModelForm):
 @admin.register(Endpoint)
 class EndpointAdmin(AuditModelAdmin):
     form = EndpointAdminForm
+    list_display = ("collection", "name", "full_path", "status", "created_by")
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("collection")
+
+    @admin.display(description="Path")
+    def full_path(self, obj):
+        collection_code = obj.collection.code if obj.collection else "—"
+        base_url = f"{self.request.scheme}://{self.request.get_host()}"
+        url = f"{base_url}/mockapi/{collection_code}/{obj.path}" if obj.collection else obj.path
+        return format_html('<a href="{}" target="_blank">{}</a>', url, url)
 
 # @admin.register(SharedCollection)
 # class SharedCollectionAdmin(ModelAdmin):

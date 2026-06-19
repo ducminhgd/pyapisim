@@ -5,6 +5,10 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 
+def _default_allowed_methods():
+    return ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"]
+
+
 class Endpoint(models.Model):
     """Endpoint model"""
     class Meta:
@@ -24,10 +28,10 @@ class Endpoint(models.Model):
     )
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
-    path = models.CharField(max_length=200)
-    allowed_methods = models.JSONField(default=list)
+    path = models.CharField(max_length=200, help_text="Unique path for the endpoint, example path: <BASE_URL>/mockapi/{code}/{path}")
+    allowed_methods = models.JSONField(default=_default_allowed_methods)
     http_status_code = models.IntegerField(default=200)
-    response_headers = models.JSONField(default=dict)
+    response_headers = models.JSONField(default=dict, blank=True)
     response_body = models.TextField(blank=True, null=True)
     delay_ms = models.IntegerField(default=0)
     status = models.CharField(max_length=20, choices=Status, default=Status.ACTIVE)
