@@ -1,24 +1,35 @@
-from rest_framework.views import APIView
+import time
 
-class RestFulAPIView(APIView):
+from django.views import View
+from django.http import HttpResponse
+from mockserver.models import Endpoint
+
+
+class MockAPIView(View):
     """
-    Base class for RESTful API views.
+    Mock API endpoint — returns pre-configured responses from the database.
+
+    Matches the request against a stored Endpoint by collection code + path,
+    then replays the configured status code, headers, and body.
     """
 
-    def get(self, request, *args, **kwargs):
-        return self.handle_request(request, *args, **kwargs)
+    def dispatch(self, request, *args, **kwargs):
+        ep = Endpoint.objects.filter(
+            collection__code=kwargs["c_code"],
+            path=kwargs["ep_path"],
+        ).first()
 
-    def post(self, request, *args, **kwargs):
-        return self.handle_request(request, *args, **kwargs)
+        if not ep or ep.status == Endpoint.Status.INACTIVE:
+            return HttpResponse("Endpoint not found", status=404)
 
-    def put(self, request, *args, **kwargs):
-        return self.handle_request(request, *args, **kwargs)
+        if request.method not in ep.allowed_methods:
+            return HttpResponse("Method not allowed", status=405)
 
-    def delete(self, request, *args, **kwargs):
-        return self.handle_request(request, *args, **kwargs)
+        if ep.delay_ms:
+            time.sleep(ep.delay_ms / 1000)
 
-    def handle_request(self, request, *args, **kwargs):
-        """
-        Override this method to handle the request and return a response.
-        """
-        raise NotImplementedError("Subclasses must implement handle_request method.")
+        return HttpResponse(
+            content=ep.response_body or "",
+            status=ep.http_status_code,
+            headers=ep.response_headers,
+        )

@@ -16,8 +16,10 @@ Including another URLconf
 """
 
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, re_path
+from mockserver import views    
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    re_path(r"^mockapi/(?P<c_code>[^/]+)/(?P<ep_path>.+)/?$", views.MockAPIView.as_view()),
 ]
