@@ -11,12 +11,8 @@ class SharedCollection(models.Model):
         VIEWER = "VIEWER", _("Viewer")
         EDITOR = "EDITOR", _("Editor")
 
-    collection = models.ForeignKey(
-        "Collection", on_delete=models.CASCADE, related_name="shared_collections"
-    )
-    shared_with = models.ForeignKey(
-        "auth.User", on_delete=models.CASCADE, related_name="shared_collections"
-    )
+    collection = models.ForeignKey("Collection", on_delete=models.CASCADE, related_name="shared_collections")
+    shared_with = models.ForeignKey("auth.User", on_delete=models.CASCADE, related_name="shared_collections")
     role = models.CharField(max_length=20, choices=Role, default=Role.VIEWER)
 
     def __str__(self):

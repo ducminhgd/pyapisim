@@ -1,25 +1,22 @@
-.PHONY: help clean install check format
+.PHONY: help clean install lint lint-fix format check fix
 
 help:
 	@echo "Available commands:"
-	@echo "  make clean   - Clean the project by removing cache and temporary files."
-	@echo "  make install - Install the project dependencies without development packages."
-	@echo "  make check   - Check code formatting using ruff."
-	@echo "  make format  - Format code using ruff."
+	@echo "  make clean     - Remove cache and temporary files."
+	@echo "  make install   - Install project dependencies."
+	@echo "  make lint      - Check linting + formatting (dry-run)."
+	@echo "  make fix       - Auto-fix linting + formatting issues."
+	@echo "  make check     - Same as lint."
 
 clean:
-	uv add pyclean --dev
 	uv run pyclean .
 	uv run ruff clean
 
 install:
 	uv sync --all-groups
 
-check:
+lint:
 	uv run ruff format . --check
 
 format:
 	uv run ruff format .
-
-pre-commit: format
-	uv sync --no-dev

@@ -48,7 +48,6 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "rest_framework",
     "mockserver.apps.MockserverConfig",
 ]
 
@@ -84,13 +83,44 @@ WSGI_APPLICATION = "pyapisim.wsgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
+#
+# Switch via DB_ENGINE env var: sqlite (default) | postgresql | mariadb
+#   DB_ENGINE=sqlite        → uses DB_NAME (default: db.sqlite3)
+#   DB_ENGINE=postgresql    → uses DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD
+#   DB_ENGINE=mariadb       → uses DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD
 
-DATABASES = {
-    "default": {
+_db_engine = getenv("DB_ENGINE", "sqlite")
+
+if _db_engine == "sqlite":
+    _default = {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "NAME": getenv("DB_NAME", BASE_DIR / "db.sqlite3"),
     }
-}
+elif _db_engine == "postgresql":
+    _default = {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": getenv("DB_NAME", "pyapisim"),
+        "USER": getenv("DB_USER", "postgres"),
+        "PASSWORD": getenv("DB_PASSWORD", ""),
+        "HOST": getenv("DB_HOST", "localhost"),
+        "PORT": getenv("DB_PORT", "5432"),
+    }
+elif _db_engine == "mariadb":
+    _default = {
+        "ENGINE": "django.db.backends.mysql",
+        "NAME": getenv("DB_NAME", "pyapisim"),
+        "USER": getenv("DB_USER", "root"),
+        "PASSWORD": getenv("DB_PASSWORD", ""),
+        "HOST": getenv("DB_HOST", "localhost"),
+        "PORT": getenv("DB_PORT", "3306"),
+        "OPTIONS": {
+            "charset": "utf8mb4",
+        },
+    }
+else:
+    raise ValueError(f"Unsupported DB_ENGINE: {_db_engine!r}")
+
+DATABASES = {"default": _default}
 
 
 # Password validation

@@ -1,14 +1,13 @@
 from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.admin import GroupAdmin as BaseGroupAdmin
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.contrib.auth.models import Group, User
 from django.forms import CheckboxSelectMultiple, ModelForm, MultipleChoiceField
 from django.utils.html import format_html
-
-from unfold.forms import AdminPasswordChangeForm, UserChangeForm, UserCreationForm
 from unfold.admin import ModelAdmin, TabularInline
-from mockserver.models import Collection, Endpoint, SharedCollection
+from unfold.forms import AdminPasswordChangeForm, UserChangeForm, UserCreationForm
 
+from mockserver.models import Collection, Endpoint, SharedCollection
 
 admin.site.unregister(User)
 admin.site.unregister(Group)
@@ -32,11 +31,7 @@ class AuditModelAdmin(ModelAdmin):
     warn_unsaved_form = True
 
     def save_model(self, request, obj, form, change):
-        username = (
-            request.user.get_username()
-            if request.user.is_authenticated
-            else "anonymous"
-        )
+        username = request.user.get_username() if request.user.is_authenticated else "anonymous"
         if not change:
             obj.created_by = username
         obj.updated_by = username
@@ -45,37 +40,37 @@ class AuditModelAdmin(ModelAdmin):
 
 class SharedCollectionInline(TabularInline):
     model = SharedCollection
-    extra = 0 # number of inline placeholders to display
+    extra = 0  # number of inline placeholders to display
     fields = ("shared_with", "role")
     autocomplete_fields = ("shared_with",)
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "shared_with":
-            kwargs["queryset"] = db_field.remote_field.model._default_manager.exclude(
-                id=request.user.id
-            )
+            kwargs["queryset"] = db_field.remote_field.model._default_manager.exclude(id=request.user.id)
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
 
 @admin.register(Collection)
 class CollectionAdmin(AuditModelAdmin):
     inlines = [SharedCollectionInline]
     list_display = ("code", "name", "status", "visibility", "created_by")
 
+
 admin.site.unregister(User)
+
 
 @admin.register(User)
 class CustomUserAdmin(UserAdmin):
     search_fields = ("username", "email", "first_name", "last_name")
 
     def get_search_results(self, request, queryset, search_term):
-        queryset, use_distinct = super().get_search_results(
-            request, queryset, search_term
-        )
+        queryset, use_distinct = super().get_search_results(request, queryset, search_term)
         # Exclude the current user from autocomplete results
         # (e.g. when sharing a collection, you can't share with yourself)
         if "app_label" in request.GET and "model_name" in request.GET:
             queryset = queryset.exclude(id=request.user.id)
         return queryset, use_distinct
+
 
 HTTP_METHOD_CHOICES = [
     ("GET", "GET"),
@@ -86,6 +81,7 @@ HTTP_METHOD_CHOICES = [
     ("HEAD", "HEAD"),
     ("OPTIONS", "OPTIONS"),
 ]
+
 
 class EndpointAdminForm(ModelForm):
     allowed_methods = MultipleChoiceField(
@@ -106,6 +102,7 @@ class EndpointAdminForm(ModelForm):
     def clean_allowed_methods(self) -> list[str]:
         return self.cleaned_data.get("allowed_methods", [])
 
+
 @admin.register(Endpoint)
 class EndpointAdmin(AuditModelAdmin):
     form = EndpointAdminForm
@@ -120,6 +117,7 @@ class EndpointAdmin(AuditModelAdmin):
         base_url = f"{self.request.scheme}://{self.request.get_host()}"
         url = f"{base_url}/mockapi/{collection_code}/{obj.path}" if obj.collection else obj.path
         return format_html('<a href="{}" target="_blank">{}</a>', url, url)
+
 
 # @admin.register(SharedCollection)
 # class SharedCollectionAdmin(ModelAdmin):

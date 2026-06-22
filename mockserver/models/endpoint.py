@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from uuid import uuid4
+
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -11,6 +12,7 @@ def _default_allowed_methods():
 
 class Endpoint(models.Model):
     """Endpoint model"""
+
     class Meta:
         unique_together = ("collection", "path")
 
@@ -28,7 +30,10 @@ class Endpoint(models.Model):
     )
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
-    path = models.CharField(max_length=200, help_text="Unique path for the endpoint, example path: <BASE_URL>/mockapi/{code}/{path}")
+    path = models.CharField(
+        max_length=200,
+        help_text="Unique path for the endpoint, example path: <BASE_URL>/mockapi/{code}/{path}",
+    )
     allowed_methods = models.JSONField(default=_default_allowed_methods)
     http_status_code = models.IntegerField(default=200)
     response_headers = models.JSONField(default=dict, blank=True)

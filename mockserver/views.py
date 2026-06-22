@@ -1,7 +1,8 @@
 import time
 
-from django.views import View
 from django.http import HttpResponse
+from django.views import View
+
 from mockserver.models import Endpoint
 
 
