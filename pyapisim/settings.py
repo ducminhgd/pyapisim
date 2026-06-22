@@ -87,7 +87,7 @@ WSGI_APPLICATION = "pyapisim.wsgi.application"
 # Switch via DB_ENGINE env var: sqlite (default) | postgresql | mariadb
 #   DB_ENGINE=sqlite        → uses DB_NAME (default: db.sqlite3)
 #   DB_ENGINE=postgresql    → uses DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD
-#   DB_ENGINE=mariadb       → uses DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD
+#   DB_ENGINE=mariadb|mysql → uses DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD
 
 _db_engine = getenv("DB_ENGINE", "sqlite")
 
@@ -105,7 +105,7 @@ elif _db_engine == "postgresql":
         "HOST": getenv("DB_HOST", "localhost"),
         "PORT": getenv("DB_PORT", "5432"),
     }
-elif _db_engine == "mariadb":
+elif _db_engine in ("mariadb", "mysql"):
     _default = {
         "ENGINE": "django.db.backends.mysql",
         "NAME": getenv("DB_NAME", "pyapisim"),
@@ -158,6 +158,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 UNFOLD = {
     "SITE_TITLE": "Mock Server",
