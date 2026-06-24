@@ -7,6 +7,9 @@ from django.utils.translation import gettext_lazy as _
 class SharedCollection(models.Model):
     """SharedCollection model"""
 
+    class Meta:
+        unique_together = ("collection", "shared_with")
+
     class Role(models.TextChoices):
         VIEWER = "VIEWER", _("Viewer")
         EDITOR = "EDITOR", _("Editor")

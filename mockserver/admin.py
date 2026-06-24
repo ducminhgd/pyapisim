@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import GroupAdmin as BaseGroupAdmin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import Group, User
+from django.db import models
 from django.forms import CheckboxSelectMultiple, ModelForm, MultipleChoiceField
 from django.utils.html import format_html
 from unfold.admin import ModelAdmin, TabularInline
@@ -54,6 +55,31 @@ class SharedCollectionInline(TabularInline):
 class CollectionAdmin(AuditModelAdmin):
     inlines = [SharedCollectionInline]
     list_display = ("code", "name", "status", "visibility", "created_by")
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        return qs.filter(
+            models.Q(created_by=request.user.get_username())
+            | models.Q(visibility=Collection.Visibility.PUBLIC)
+            | models.Q(id__in=request.user.shared_collections.values("collection_id")),
+        )
+
+    def has_view_permission(self, request, obj=None):
+        if obj is None:
+            return True
+        return obj.user_can_view(request.user)
+
+    def has_change_permission(self, request, obj=None):
+        if obj is None:
+            return True
+        return obj.user_can_edit(request.user)
+
+    def has_delete_permission(self, request, obj=None):
+        if obj is None:
+            return True
+        return obj.is_owner(request.user)
 
 
 admin.site.unregister(User)
@@ -109,7 +135,45 @@ class EndpointAdmin(AuditModelAdmin):
     list_display = ("collection", "name", "full_path", "status", "created_by")
 
     def get_queryset(self, request):
-        return super().get_queryset(request).select_related("collection")
+        qs = super().get_queryset(request).select_related("collection")
+        if request.user.is_superuser:
+            return qs
+        return qs.filter(
+            models.Q(collection__created_by=request.user.get_username())
+            | models.Q(collection__visibility=Collection.Visibility.PUBLIC)
+            | models.Q(collection__id__in=request.user.shared_collections.values("collection_id")),
+        )
+
+    def has_view_permission(self, request, obj=None):
+        if obj is None:
+            return True
+        collection = obj.collection
+        return collection is not None and collection.user_can_view(request.user)
+
+    def has_change_permission(self, request, obj=None):
+        if obj is None:
+            return True
+        collection = obj.collection
+        return collection is not None and collection.user_can_edit(request.user)
+
+    def has_delete_permission(self, request, obj=None):
+        if obj is None:
+            return True
+        collection = obj.collection
+        return collection is not None and collection.is_owner(request.user)
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "collection":
+            if request.user.is_superuser:
+                kwargs["queryset"] = Collection.objects.all()
+            else:
+                kwargs["queryset"] = Collection.objects.filter(
+                    models.Q(created_by=request.user.get_username())
+                    | models.Q(id__in=request.user.shared_collections.filter(
+                        role=SharedCollection.Role.EDITOR,
+                    ).values("collection_id")),
+                )
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
     @admin.display(description="Path")
     def full_path(self, obj):
