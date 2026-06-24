@@ -1,0 +1,78 @@
+services:
+  app:
+    build: .
+    container_name: pyapisim
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - STATIC_ROOT=/app/staticfiles
+    volumes:
+      # SQLite database (persist across container recreates)
+      - ${HOME}/docker-volumes/pyapisim/data:/app/data
+      # Static files (served by reverse proxy in production)
+      - ${HOME}/docker-volumes/pyapisim/static:/app/staticfiles
+    networks:
+      - pyapisim
+    depends_on:
+      postgres:
+        condition: service_healthy
+        required: false
+      mariadb:
+        condition: service_healthy
+        required: false
+
+  # --- PostgreSQL (profile: postgres) ---
+  postgres:
+    image: postgres:17-alpine
+    container_name: pyapisim-pg
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_DB=${DB_NAME:-pyapisim}
+      - POSTGRES_USER=${DB_USER:-postgres}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - ${HOME}/docker-volumes/pyapisim/pgdata:/var/lib/postgresql/data
+    networks:
+      - pyapisim
+    profiles:
+      - postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-pyapisim}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # --- MariaDB / MySQL (profile: mariadb) ---
+  mariadb:
+    image: mariadb:11-ubi
+    container_name: pyapisim-mariadb
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - MARIADB_DATABASE=${DB_NAME:-pyapisim}
+      - MARIADB_USER=${DB_USER:-pyapisim}
+      - MARIADB_PASSWORD=${DB_PASSWORD}
+      - MARIADB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+    volumes:
+      - ${HOME}/docker-volumes/pyapisim/mariadbdata:/var/lib/mysql
+    networks:
+      - pyapisim
+    profiles:
+      - mariadb
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+networks:
+  pyapisim:
+    driver: bridge
