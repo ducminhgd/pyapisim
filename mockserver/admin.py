@@ -169,9 +169,11 @@ class EndpointAdmin(AuditModelAdmin):
             else:
                 kwargs["queryset"] = Collection.objects.filter(
                     models.Q(created_by=request.user.get_username())
-                    | models.Q(id__in=request.user.shared_collections.filter(
-                        role=SharedCollection.Role.EDITOR,
-                    ).values("collection_id")),
+                    | models.Q(
+                        id__in=request.user.shared_collections.filter(
+                            role=SharedCollection.Role.EDITOR,
+                        ).values("collection_id")
+                    ),
                 )
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 

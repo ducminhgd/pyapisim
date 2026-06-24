@@ -5,15 +5,14 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('mockserver', '0001_initial'),
+        ("mockserver", "0001_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AlterUniqueTogether(
-            name='sharedcollection',
-            unique_together={('collection', 'shared_with')},
+            name="sharedcollection",
+            unique_together={("collection", "shared_with")},
         ),
     ]
