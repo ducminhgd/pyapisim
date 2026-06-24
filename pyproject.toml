@@ -1,0 +1,30 @@
+[project]
+name = "pyapisim"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "django>=6.0.6",
+    "django-unfold>=0.97.1",
+    "gunicorn>=23.0.0",
+    "tzdata>=2025.2",
+]
+
+[dependency-groups]
+dev = [
+    "pyclean>=3.7.0",
+    "ruff>=0.15.17",
+]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]

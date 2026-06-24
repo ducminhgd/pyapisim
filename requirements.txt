@@ -1,3 +1,0 @@
-Django==4.2.29
-djangorestframework==3.15.2
-soaplib==2.0.0b2
