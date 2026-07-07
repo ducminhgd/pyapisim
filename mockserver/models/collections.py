@@ -74,5 +74,73 @@ class Collection(models.Model):
         """Return True if *user* can delete this collection or its endpoints."""
         return self.is_owner(user)
 
+    def delete(self, *args, **kwargs):
+        """Delete this collection along with all its endpoints and sharing records.
+
+        Endpoints use ``on_delete=SET_NULL`` so they are not cascade-deleted by the
+        database.  We explicitly delete them here so no orphaned endpoints remain.
+        """
+        from django.db import transaction
+
+        with transaction.atomic():
+            self.endpoints.all().delete()
+            super().delete(*args, **kwargs)
+
+    def duplicate(self, new_code: str, new_name: str, created_by: str) -> Collection:
+        """Create a deep copy of this collection.
+
+        Copies all scalar fields, all endpoints, and all sharing records into a
+        new ``Collection``. Runs inside ``transaction.atomic()`` so the entire
+        clone succeeds or fails as a unit.
+
+        Returns:
+            The newly created ``Collection`` instance.
+        """
+        from django.db import transaction
+
+        from mockserver.models.endpoint import Endpoint
+        from mockserver.models.shared_collection import SharedCollection as _SC
+
+        with transaction.atomic():
+            new_collection = Collection.objects.create(
+                name=new_name,
+                code=new_code,
+                description=self.description,
+                status=self.status,
+                visibility=self.visibility,
+                created_by=created_by,
+                updated_by=created_by,
+            )
+
+            # Clone all endpoints.
+            for ep in self.endpoints.all():
+                Endpoint.objects.create(
+                    collection=new_collection,
+                    name=ep.name,
+                    description=ep.description,
+                    path=ep.path,
+                    allowed_methods=ep.allowed_methods,
+                    http_status_code=ep.http_status_code,
+                    response_headers=ep.response_headers,
+                    response_body=ep.response_body,
+                    delay_ms=ep.delay_ms,
+                    status=ep.status,
+                    created_by=created_by,
+                    updated_by=created_by,
+                )
+
+            # Clone all sharing records, except for the new creator
+            # (the creator is already the owner and doesn't need a share).
+            for share in self.shared_collections.all():
+                if share.shared_with.get_username() == created_by:
+                    continue
+                _SC.objects.create(
+                    collection=new_collection,
+                    shared_with=share.shared_with,
+                    role=share.role,
+                )
+
+        return new_collection
+
     def __str__(self):
         return f"[{self.code}] {self.name}"
