@@ -109,9 +109,7 @@ class CollectionAdmin(AuditModelAdmin):
         extra_context = extra_context or {}
         obj = self.get_object(request, object_id)
         if obj is not None and obj.user_can_view(request.user):
-            extra_context["duplicate_url"] = reverse(
-                "mockserver:collection_duplicate", args=[obj.pk]
-            )
+            extra_context["duplicate_url"] = reverse("mockserver:collection_duplicate", args=[obj.pk])
         return super().change_view(request, object_id, form_url, extra_context)
 
     def delete_view(self, request, object_id, extra_context=None):
@@ -135,7 +133,7 @@ class CollectionAdmin(AuditModelAdmin):
             actions.append(
                 format_html(
                     '<a href="{}" title="{}" class="inline-flex items-center p-1.5 rounded border'
-                    ' border-base-200 dark:border-base-700 text-important hover:bg-base-100'
+                    " border-base-200 dark:border-base-700 text-important hover:bg-base-100"
                     ' dark:hover:bg-base-800 cursor-pointer">'
                     '<span class="material-symbols-outlined text-base">content_copy</span></a>',
                     dup_url,
@@ -152,7 +150,7 @@ class CollectionAdmin(AuditModelAdmin):
             actions.append(
                 format_html(
                     '<a href="{}" title="{}" class="inline-flex items-center p-1.5 rounded border'
-                    ' border-base-200 dark:border-base-700 text-important hover:bg-base-100'
+                    " border-base-200 dark:border-base-700 text-important hover:bg-base-100"
                     ' dark:hover:bg-base-800 cursor-pointer">'
                     '<span class="material-symbols-outlined text-base">{}</span></a>',
                     toggle_url,
@@ -167,7 +165,7 @@ class CollectionAdmin(AuditModelAdmin):
             actions.append(
                 format_html(
                     '<a href="{}" title="{}" class="inline-flex items-center p-1.5 rounded border'
-                    ' border-base-200 dark:border-base-700 text-important hover:bg-base-100'
+                    " border-base-200 dark:border-base-700 text-important hover:bg-base-100"
                     ' dark:hover:bg-base-800 cursor-pointer">'
                     '<span class="material-symbols-outlined text-base">delete</span></a>',
                     delete_url,
@@ -267,9 +265,7 @@ class EndpointAdmin(AuditModelAdmin):
         if obj is not None and obj.collection is not None:
             collection = obj.collection
             if collection.user_can_view(request.user):
-                extra_context["duplicate_url"] = reverse(
-                    "mockserver:endpoint_duplicate", args=[obj.pk]
-                )
+                extra_context["duplicate_url"] = reverse("mockserver:endpoint_duplicate", args=[obj.pk])
         return super().change_view(request, object_id, form_url, extra_context)
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
@@ -309,7 +305,7 @@ class EndpointAdmin(AuditModelAdmin):
             actions.append(
                 format_html(
                     '<a href="{}" title="{}" class="inline-flex items-center p-1.5 rounded border'
-                    ' border-base-200 dark:border-base-700 text-important hover:bg-base-100'
+                    " border-base-200 dark:border-base-700 text-important hover:bg-base-100"
                     ' dark:hover:bg-base-800 cursor-pointer">'
                     '<span class="material-symbols-outlined text-base">content_copy</span></a>',
                     dup_url,
@@ -326,7 +322,7 @@ class EndpointAdmin(AuditModelAdmin):
             actions.append(
                 format_html(
                     '<a href="{}" title="{}" class="inline-flex items-center p-1.5 rounded border'
-                    ' border-base-200 dark:border-base-700 text-important hover:bg-base-100'
+                    " border-base-200 dark:border-base-700 text-important hover:bg-base-100"
                     ' dark:hover:bg-base-800 cursor-pointer">'
                     '<span class="material-symbols-outlined text-base">{}</span></a>',
                     toggle_url,
@@ -341,7 +337,7 @@ class EndpointAdmin(AuditModelAdmin):
             actions.append(
                 format_html(
                     '<a href="{}" title="{}" class="inline-flex items-center p-1.5 rounded border'
-                    ' border-base-200 dark:border-base-700 text-important hover:bg-base-100'
+                    " border-base-200 dark:border-base-700 text-important hover:bg-base-100"
                     ' dark:hover:bg-base-800 cursor-pointer">'
                     '<span class="material-symbols-outlined text-base">delete</span></a>',
                     delete_url,

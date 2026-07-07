@@ -140,9 +140,7 @@ class DuplicateEndpointForm(forms.ModelForm):
             self.fields["description"].initial = original.description
             self.fields["allowed_methods"].initial = original.allowed_methods or []
             self.fields["http_status_code"].initial = original.http_status_code
-            self.fields["response_headers"].initial = json.dumps(
-                original.response_headers, indent=2
-            )
+            self.fields["response_headers"].initial = json.dumps(original.response_headers, indent=2)
             self.fields["response_body"].initial = original.response_body
             self.fields["delay_ms"].initial = original.delay_ms
             self.fields["status"].initial = original.status

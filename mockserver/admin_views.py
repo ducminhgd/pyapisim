@@ -114,8 +114,7 @@ class ToggleStatusView(View):
 
         # Toggle status.
         new_status = (
-            model_class.Status.INACTIVE if obj.status == model_class.Status.ACTIVE
-            else model_class.Status.ACTIVE
+            model_class.Status.INACTIVE if obj.status == model_class.Status.ACTIVE else model_class.Status.ACTIVE
         )
         obj.status = new_status
         obj.save(update_fields=["status"])
