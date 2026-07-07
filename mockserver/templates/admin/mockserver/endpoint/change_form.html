@@ -1,0 +1,9 @@
+{% extends "admin/change_form.html" %}{% load i18n %}
+
+{% block object-tools-items %}
+    {% if duplicate_url %}
+        {% translate 'Duplicate' as title %}
+        {% include "unfold/helpers/tab_action.html" with title=title link=duplicate_url icon="content_copy" %}
+    {% endif %}
+    {{ block.super }}
+{% endblock %}
