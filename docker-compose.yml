@@ -14,13 +14,6 @@ services:
       - pyapisim_data:/app/data
     networks:
       - pyapisim
-    depends_on:
-      postgres:
-        condition: service_healthy
-        required: false
-      mariadb:
-        condition: service_healthy
-        required: false
 
   # --- PostgreSQL (profile: postgres) ---
   postgres:
