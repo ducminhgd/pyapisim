@@ -24,16 +24,13 @@ response bodies, and simulated latency.
 cp .env.example .env
 # edit .env — set SECRET_KEY, ALLOWED_HOSTS, and pick a DB backend
 
-# 2. Create host directories for persistent data
-mkdir -p $HOME/docker-volumes/pyapisim/{data,static}
-
-# 3. Start (SQLite by default — zero extra dependencies)
+# 2. Start (SQLite by default — zero extra dependencies)
 docker compose up -d --build
 
-# 4. Run migrations
+# 3. Run migrations
 docker compose exec app python manage.py migrate
 
-# 5. Create a superuser
+# 4. Create a superuser
 docker compose exec app python manage.py createsuperuser
 ```
 
@@ -42,10 +39,7 @@ Open `http://localhost:8000/admin/` and log in.
 ### Switching to PostgreSQL
 
 ```bash
-# Create the data directory
-mkdir -p $HOME/docker-volumes/pyapisim/pgdata
-
-# Edit .env — uncomment the PostgreSQL block and set DB_ENGINE=postgresql
+# Edit .env — set DB_ENGINE=postgresql and fill in DB_HOST/DB_PORT/DB_NAME/DB_USER/DB_PASSWORD
 docker compose --profile postgres up -d --build
 docker compose exec app python manage.py migrate
 docker compose exec app python manage.py createsuperuser
@@ -54,10 +48,7 @@ docker compose exec app python manage.py createsuperuser
 ### Switching to MariaDB / MySQL
 
 ```bash
-# Create the data directory
-mkdir -p $HOME/docker-volumes/pyapisim/mariadbdata
-
-# Edit .env — uncomment the MariaDB block and set DB_ENGINE=mariadb
+# Edit .env — set DB_ENGINE=mariadb and fill in DB_HOST/DB_PORT/DB_NAME/DB_USER/DB_PASSWORD/DB_ROOT_PASSWORD
 docker compose --profile mariadb up -d --build
 docker compose exec app python manage.py migrate
 docker compose exec app python manage.py createsuperuser
@@ -150,6 +141,52 @@ uv run python manage.py createsuperuser
 
 # Run
 uv run python manage.py runserver
+```
+
+---
+
+## Environment Variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `SECRET_KEY` | *(required)* | Django secret key. Generate with `uv run python -c "import secrets; print(secrets.token_urlsafe(50))"` |
+| `DEBUG` | `False` | Set to `True` to enable Django debug mode (never in production) |
+| `ALLOWED_HOSTS` | *(empty)* | Comma-separated hostnames. **Required when `DEBUG=False`**. Example: `localhost,127.0.0.1,example.com` |
+| `DB_ENGINE` | `sqlite` | `sqlite`, `postgresql`, or `mariadb` |
+| `DB_NAME` | `db.sqlite3` | Database name, or file path when using SQLite. In Docker use `/app/data/db.sqlite3` |
+| `DB_HOST` | `localhost` | Database host (postgresql / mariadb only) |
+| `DB_PORT` | `5432` / `3306` | Database port |
+| `DB_USER` | `postgres` / `root` | Database user |
+| `DB_PASSWORD` | *(empty)* | Database password |
+| `DB_ROOT_PASSWORD` | *(empty)* | MariaDB root password (mariadb profile only) |
+| `LANGUAGE_CODE` | `en-us` | Django language code |
+| `TIME_ZONE` | `UTC` | Django time zone |
+| `LOG_LEVEL` | `INFO` | Django log level (`DEBUG`, `INFO`, `WARNING`, `ERROR`) |
+| `GUNICORN_LOG_LEVEL` | `info` | Gunicorn log level (`debug`, `info`, `warning`, `error`) |
+| `GUNICORN_WORKERS` | `2` | Number of gunicorn worker processes |
+
+---
+
+## Viewing Logs
+
+```bash
+# Follow live logs
+docker compose logs -f app
+
+# Last 100 lines
+docker compose logs --tail 100 app
+
+# Since a specific time
+docker compose logs --since 10m app
+```
+
+Gunicorn access logs are written to stdout and appear in `docker compose logs`.
+Django logs at `INFO` level and above also appear here.
+
+To temporarily increase log verbosity for debugging:
+
+```bash
+LOG_LEVEL=DEBUG GUNICORN_LOG_LEVEL=debug docker compose up
 ```
 
 ---
