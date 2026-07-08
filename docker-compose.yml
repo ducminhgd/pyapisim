@@ -11,9 +11,7 @@ services:
       - STATIC_ROOT=/app/staticfiles
     volumes:
       # SQLite database (persist across container recreates)
-      - ${HOME}/docker-volumes/pyapisim/data:/app/data
-      # Static files (served by reverse proxy in production)
-      - ${HOME}/docker-volumes/pyapisim/static:/app/staticfiles
+      - pyapisim_data:/app/data
     networks:
       - pyapisim
     depends_on:
@@ -36,7 +34,7 @@ services:
       - POSTGRES_USER=${DB_USER:-postgres}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
     volumes:
-      - ${HOME}/docker-volumes/pyapisim/pgdata:/var/lib/postgresql/data
+      - pyapisim_pgdata:/var/lib/postgresql/data
     networks:
       - pyapisim
     profiles:
@@ -61,7 +59,7 @@ services:
       - MARIADB_PASSWORD=${DB_PASSWORD}
       - MARIADB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
     volumes:
-      - ${HOME}/docker-volumes/pyapisim/mariadbdata:/var/lib/mysql
+      - pyapisim_mariadbdata:/var/lib/mysql
     networks:
       - pyapisim
     profiles:
@@ -72,6 +70,11 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
+
+volumes:
+  pyapisim_data:
+  pyapisim_pgdata:
+  pyapisim_mariadbdata:
 
 networks:
   pyapisim:
