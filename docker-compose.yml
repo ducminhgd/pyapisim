@@ -20,6 +20,8 @@ services:
     image: postgres:17-alpine
     container_name: pyapisim-pg
     restart: unless-stopped
+    ports:
+      - "5432:5432"
     env_file:
       - .env
     environment:
@@ -44,6 +46,8 @@ services:
     image: mariadb:11-ubi
     container_name: pyapisim-mariadb
     restart: unless-stopped
+    ports:
+      - "3306:3306"
     env_file:
       - .env
     environment:
@@ -51,6 +55,7 @@ services:
       - MARIADB_USER=${DB_USER:-pyapisim}
       - MARIADB_PASSWORD=${DB_PASSWORD}
       - MARIADB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+      - MARIADB_ROOT_HOST=%
     volumes:
       - pyapisim_mariadbdata:/var/lib/mysql
     networks:
