@@ -152,6 +152,8 @@ uv run python manage.py runserver
 | `SECRET_KEY` | *(required)* | Django secret key. Generate with `uv run python -c "import secrets; print(secrets.token_urlsafe(50))"` |
 | `DEBUG` | `False` | Set to `True` to enable Django debug mode (never in production) |
 | `ALLOWED_HOSTS` | *(empty)* | Comma-separated hostnames. **Required when `DEBUG=False`**. Example: `localhost,127.0.0.1,example.com` |
+| `CSRF_TRUSTED_ORIGINS` | *(empty)* | Comma-separated HTTPS origins. **Required when `DEBUG=False` and served over HTTPS**. Example: `https://example.com,https://www.example.com` |
+| `HTTPS` | `False` | Set to `True` when served over HTTPS. Enables secure cookies and trusts `X-Forwarded-Proto` from the TLS-terminating reverse proxy |
 | `DB_ENGINE` | `sqlite` | `sqlite`, `postgresql`, or `mariadb` |
 | `DB_NAME` | `db.sqlite3` | Database name, or file path when using SQLite. In Docker use `/app/data/db.sqlite3` |
 | `DB_HOST` | `localhost` | Database host (postgresql / mariadb only) |
@@ -164,6 +166,61 @@ uv run python manage.py runserver
 | `LOG_LEVEL` | `INFO` | Django log level (`DEBUG`, `INFO`, `WARNING`, `ERROR`) |
 | `GUNICORN_LOG_LEVEL` | `info` | Gunicorn log level (`debug`, `info`, `warning`, `error`) |
 | `GUNICORN_WORKERS` | `2` | Number of gunicorn worker processes |
+
+---
+
+## Running with HTTPS
+
+When `DEBUG=False`, Django enforces CSRF origin checks for HTTPS requests.
+Configure these variables in your `.env` to avoid "CSRF verification failed" errors:
+
+```env
+CSRF_TRUSTED_ORIGINS=https://your-domain.com
+HTTPS=True
+```
+
+Setting `HTTPS=True` also enables secure cookies and tells Django to trust the
+`X-Forwarded-Proto` header from your reverse proxy.
+
+### Local development with HTTPS
+
+The easiest way to simulate HTTPS locally is with `runserver_plus` from
+`django-extensions`:
+
+```bash
+# Install
+uv add --group dev django-extensions werkzeug pyopenssl
+
+# Generate a self-signed certificate
+openssl req -x509 -newkey rsa:4096 -sha256 -days 365 -nodes \
+  -keyout localhost.key -out localhost.crt \
+  -subj "/CN=localhost" \
+  -addext "subjectAltName=DNS:localhost,IP:127.0.0.1"
+
+# Start the server with SSL
+uv run python manage.py runserver_plus --cert-file localhost.crt --key-file localhost.key
+```
+
+Then in `.env`:
+
+```env
+ALLOWED_HOSTS=localhost,127.0.0.1
+CSRF_TRUSTED_ORIGINS=https://localhost:8000
+HTTPS=True
+```
+
+Open `https://localhost:8000/admin/` and accept the self-signed certificate warning.
+
+### Production deployment (behind a reverse proxy)
+
+When gunicorn runs behind nginx, Caddy, or a cloud load balancer that terminates
+TLS, set `HTTPS=True` so Django trusts the `X-Forwarded-Proto` header and sets
+the `Secure` flag on cookies:
+
+```env
+CSRF_TRUSTED_ORIGINS=https://your-domain.com
+HTTPS=True
+```
 
 ---
 
@@ -193,7 +250,8 @@ LOG_LEVEL=DEBUG GUNICORN_LOG_LEVEL=debug docker compose up
 
 ## Managing Mock Endpoints
 
-Open the admin panel at `http://localhost:8000/admin/` and configure:
+Open the admin panel at `http://localhost:8000/admin/` (or `https://` if you've configured
+SSL) and configure:
 
 - **Collections** — group related endpoints (e.g. `users`, `orders`). Each
   collection has a unique `code` that becomes part of the mock URL.

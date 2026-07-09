@@ -28,6 +28,19 @@ DEBUG = getenv("DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = getenv("ALLOWED_HOSTS", "").split(",") if getenv("ALLOWED_HOSTS") else []
 
+# CSRF trusted origins — required for HTTPS + DEBUG=False.
+# Set to the scheme+hostname(s) that serve the app, e.g. "https://example.com,https://www.example.com".
+_csrf_origins = getenv("CSRF_TRUSTED_ORIGINS", "")
+CSRF_TRUSTED_ORIGINS = [o.strip() for o in _csrf_origins.split(",") if o.strip()]
+
+# When deployed over HTTPS, enable secure cookies and tell Django to trust the
+# X-Forwarded-Proto header from the TLS-terminating reverse proxy.
+_ssl_on = getenv("HTTPS", "False") == "True"
+SESSION_COOKIE_SECURE = _ssl_on
+CSRF_COOKIE_SECURE = _ssl_on
+if _ssl_on:
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
 
 # Application definition
 
